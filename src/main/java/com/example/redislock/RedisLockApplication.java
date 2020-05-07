@@ -32,7 +32,7 @@ public class RedisLockApplication {
 
     @Bean
     public RedisLockRegistry defaultLockRegistry(RedisConnectionFactory connectionFactory) {
-        return new RedisLockRegistry(connectionFactory, "gaming-core:idempotency", Duration.ofMinutes(5).toMillis());
+        return new RedisLockRegistry(connectionFactory, "gc:registry_key", Duration.ofMinutes(5).toMillis());
     }
 }
 
