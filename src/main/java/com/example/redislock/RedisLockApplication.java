@@ -75,20 +75,16 @@ class RedisLockController {
 class MessageRepository {
 
     private final ValueOperations<String, Message> valueOps;
-    private final HashOperations<String, String, Message> hashOps;
 
     MessageRepository(RedisTemplate redisTemplate) {
-        this.hashOps = redisTemplate.opsForHash();
         this.valueOps = redisTemplate.opsForValue();
     }
 
     public void set(String key, Message m) {
-//        hashOps.put("tmp:MESSAGES", key, m);
         valueOps.set("tmp:MESSAGES" + key, m, Duration.ofSeconds(60L));
     }
 
     public Message get(String key) {
-//        return hashOps.get("tmp:MESSAGES", key);
         return valueOps.get("tmp:MESSAGES" + key);
     }
 }
