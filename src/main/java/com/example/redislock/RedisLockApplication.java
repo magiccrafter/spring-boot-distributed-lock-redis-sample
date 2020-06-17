@@ -5,12 +5,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.integration.redis.util.RedisLockRegistry;
-import org.springframework.integration.support.locks.DefaultLockRegistry;
+import org.springframework.integration.support.locks.ExpirableLockRegistry;
 import org.springframework.integration.support.locks.LockRegistry;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +40,7 @@ public class RedisLockApplication {
 @RequiredArgsConstructor
 class RedisLockController {
 
-    private final LockRegistry lockRegistry;
+    private final ExpirableLockRegistry lockRegistry;
     private final MessageRepository repository;
 
     @SneakyThrows
@@ -68,6 +68,17 @@ class RedisLockController {
     @GetMapping("/{key}")
     public Message message(@PathVariable String key) {
         return repository.get(key);
+    }
+
+    /**
+     * IMPORTANT: Starting with version 5.0, the RedisLockRegistry implements ExpirableLockRegistry,
+     * which removes locks last acquired more than age ago and that are not currently locked.
+     *
+     * {@link ExpirableLockRegistry#expireUnusedOlderThan(long)} has to be called if the key is unique on each lock
+     */
+    @Scheduled(fixedDelay = 1000)
+    protected void cleanObsoleteInMemoryLocks() {
+        lockRegistry.expireUnusedOlderThan(Duration.ofSeconds(30).toMillis());
     }
 }
 
